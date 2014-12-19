@@ -1,0 +1,4 @@
+- left reads: [/home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.1.fastq.gz]
+  orientation: fr
+  right reads: [/home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.2.fastq.gz]
+  type: paired-end

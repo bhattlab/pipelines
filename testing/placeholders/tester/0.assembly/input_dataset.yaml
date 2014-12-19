@@ -1,0 +1,4 @@
+- left reads: [/home/elimoss/pipelines/testing/tester_1.fq.gz]
+  orientation: fr
+  right reads: [/home/elimoss/pipelines/testing/tester_2.fq.gz]
+  type: paired-end

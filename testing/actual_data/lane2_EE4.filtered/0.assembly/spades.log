@@ -1,0 +1,71 @@
+Command line: /srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/spades.py -o lane2_EE4.filtered/0.assembly -1 /home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.1.fastq.gz -2 /home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.2.fastq.gz
+
+System information:
+  SPAdes version: 3.1.1
+  Python version: 2.7.8
+  OS: Linux-2.6.32-431.23.3.el6.x86_64-x86_64-with-redhat-6.3-Santiago
+
+Output dir: /home/elimoss/pipelines/testing/actual_data/lane2_EE4.filtered/0.assembly
+Mode: read error correction and assembling
+Debug mode is turned OFF
+
+Dataset parameters:
+  Multi-cell mode (you should set '--sc' flag if input data was obtained with MDA (single-cell) technology
+  Reads:
+    Library number: 1, library type: paired-end
+      orientation: fr
+      left reads: ['/home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.1.fastq.gz']
+      right reads: ['/home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.2.fastq.gz']
+      interlaced reads: not specified
+      single reads: not specified
+Read error correction parameters:
+  Iterations: 1
+  PHRED offset will be auto-detected
+  Corrected reads will be compressed (with gzip)
+Assembly parameters:
+  k: automatic selection based on read length
+  Mismatch careful mode is turned OFF
+  Repeat resolution is enabled
+  MismatchCorrector will be SKIPPED
+Other parameters:
+  Dir for temp files: /home/elimoss/pipelines/testing/actual_data/lane2_EE4.filtered/0.assembly/tmp
+  Threads: 16
+  Memory limit (in Gb): 250
+
+
+======= SPAdes pipeline started. Log can be found here: /home/elimoss/pipelines/testing/actual_data/lane2_EE4.filtered/0.assembly/spades.log
+
+
+===== Read error correction started. 
+
+
+== Running read error correction tool: /srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/hammer /home/elimoss/pipelines/testing/actual_data/lane2_EE4.filtered/0.assembly/corrected/configs/config.info
+
+   0:00:00.000    4M /    4M   INFO  General                 (main.cpp                  :  82)   Loading config from /home/elimoss/pipelines/testing/actual_data/lane2_EE4.filtered/0.assembly/corrected/configs/config.info
+   0:00:00.003    4M /    4M   INFO  General                 (memory_limit.hpp          :  42)   Memory limit set to 250 Gb
+   0:00:00.003    4M /    4M   INFO  General                 (main.cpp                  :  91)   Trying to determine PHRED offset
+   0:00:00.007    4M /    4M   INFO  General                 (main.cpp                  :  97)   Determined value is 33
+   0:00:00.009    4M /    4M   INFO  General                 (hammer_tools.cpp          :  36)   Hamming graph threshold tau=1, k=21, subkmer positions = [ 0 10 ]
+     === ITERATION 0 begins ===
+   0:00:00.009    4M /    4M   INFO K-mer Index Building     (kmer_index.hpp            : 467)   Building kmer index
+   0:00:00.009    4M /    4M   INFO K-mer Splitting          (kmer_data.cpp             : 127)   Splitting kmer instances into 256 buckets. This might take a while.
+   0:00:00.010    4M /    4M   INFO  General                 (file_limit.hpp            :  29)   Open file limit set to 1024
+   0:00:00.010    4M /    4M   INFO K-mer Splitting          (kmer_data.cpp             : 145)   Memory available for splitting buffers: 5.20825 Gb
+   0:00:00.010    4M /    4M   INFO K-mer Splitting          (kmer_data.cpp             : 153)   Using cell size of 262144
+   0:00:07.686    8G /    8G   INFO K-mer Splitting          (kmer_data.cpp             : 167)   Processing /home/elimoss/bhattlab/data/stoolsamples/fastq/unmerged/lane2_EE4.filtered.1.fastq.gz
+   0:01:18.351    8G /    9G   INFO K-mer Splitting          (kmer_data.cpp             : 176)   Processed 5824633 reads
+
+Traceback (most recent call last):
+  File "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/spades.py", line 546, in main
+    ext_python_modules_home, log)
+  File "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/share/spades/spades_pipeline/hammer_logic.py", line 129, in run_hammer
+    support.sys_call(command, log)
+  File "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/share/spades/spades_pipeline/support.py", line 177, in sys_call
+    line = process_readline(proc.stdout.readline()).rstrip()
+KeyboardInterrupt
+
+
+== Error ==  exception caught: <type 'exceptions.KeyboardInterrupt'>
+
+In case you have troubles running SPAdes, you can write to spades.support@bioinf.spbau.ru
+Please provide us with params.txt and spades.log files from the output directory.
