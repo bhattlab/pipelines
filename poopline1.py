@@ -3,6 +3,8 @@
 #a note to self: this is called with the following command:
 #nohup python ~/pipelines/poopline1.py Pipe --sample-list-loc *samples.list --workers=$(wc -l *samples.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01 1> pipeline.log 2> pipeline.err &
 
+#to test:
+#python ~/pipelines/poopline1.py Pipe --sample-list-loc tester.list --workers=$(wc -l tester.list | tr ' ' '\t' | cut -f1) --local-scheduler
 
 from subprocess import check_output
 import subprocess
@@ -12,8 +14,8 @@ import random
 
 from luigi_tasks import *
 
-FASTQ_SUFFIX_1 = '_1.fq.gz'
-FASTQ_SUFFIX_2 = '_2.fq.gz'
+FASTQ_SUFFIX_1 = '.1.fastq.gz'
+FASTQ_SUFFIX_2 = '.2.fastq.gz'
     
 #================================================================================================================
 
@@ -172,11 +174,20 @@ class Distruct(luigi.Task):
 	
 class Humann(luigi.Task):
 	sample_prefix_list = luigi.Parameter()
-	
 	def run(self):
-		pass
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		humann_loc = '/home/elimoss/moss/tools/humann/humann-0.99'
+		run_cmd("cp -r %s ./humann" % (humann_loc))
+		run_cmd("rm humann/input/*.txt")
+		for sample in samples:
+			run_cmd("ln -s $(pwd)/%s/2.blast/blastx_results_kegg_all_orgs.bls humann/input/%s.txt" % (sample, sample))
+			mkdir("%s/3.humann" % sample)
+		run_cmd("cd humann; scons; cd -")
+		for sample in samples:
+			run_cmd("ln -s $(pwd)/humann/output/*%s* %s/3.humann/" % (sample, sample))
 	def output(self):
-		pass
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		return [(luigi.LocalTarget("%s/3.humann/%s_04b-hit-keg-mpm-cop-nul-nve-nve.txt" % (sample, sample)) for sample in samples)]
 	def requires(self):
 		return [Blastx(sample_prefix) for sample_prefix in self.sample_prefix_list]
 
