@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 #a note to self: this is called with the following command:
-#nohup python ~/pipelines/poopline1.py Pipe --sample-list-loc *samples.list --workers=$(wc -l *samples.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01 1> pipeline.log 2> pipeline.err &
+#nohup python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc *samples.list --workers=$(wc -l *samples.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01 1> pipeline.log 2> pipeline.err &
 
 #to test:
-#python ~/pipelines/poopline1.py Pipe --sample-list-loc tester.list --workers=$(wc -l tester.list | tr ' ' '\t' | cut -f1) --local-scheduler
+#python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc tester.list --workers=$(wc -l tester.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01
 
 from subprocess import check_output
 import subprocess
@@ -41,8 +41,6 @@ class Assembly(luigi.Task):
 		cmd = "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/spades.py -o {assembly_dir} -1 {sample_pref}{suffix1} -2 {sample_pref}{suffix2} &> {assembly_dir}/spades_output.log".format(assembly_dir = assembly_dir_val, sample_pref = self.sample_prefix, suffix1 = FASTQ_SUFFIX_1, suffix2 = FASTQ_SUFFIX_2)
 
 		run_cmd(cmd)
-
-
 
 
 #Align reads to assembled Contigs
@@ -118,14 +116,51 @@ class Align_To_NCBI(luigi.Task):
 		
 		run_cmd(cmd)
 
-class Index_Sort_Bams(luigi.Task):
+class Diversity(luigi.Task):
+	sample_prefix_list = luigi.Parameter()
+	def requires(self):
+		return [Bam_Idx_Diversity(sample_prefix, self.sample_prefix_list) for sample_prefix in self.sample_prefix_list]
+	def output(self):
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		return [luigi.LocalTarget("%s/4.diversity/ncbi_read_counts.txt" % sample) for sample in samples]
+	
+class Bam_Idx_Diversity(luigi.Task):
+	sample_prefix = luigi.Parameter()
 	sample_prefix_list = luigi.Parameter()
 	
+	def output(self):
+		sample = self.sample_prefix.split('/')[-1]
+		return luigi.LocalTarget("%s/4.diversity/ncbi_read_counts.txt" % sample)
+	def run(self):
+		sample = self.sample_prefix.split('/')[-1]
+		mkdir("%s/4.diversity" % (sample))
+		run_cmd("bam_idx_diversity %s/1.alignment/aligned_to_ncbi_map_pos_sorted.bam > %s/4.diversity/ncbi_read_counts.txt" % (sample, sample))
+	def requires(self):
+		return Index_Sort_Bams(self.sample_prefix_list)
+		
+class Index_Sort_Bams(luigi.Task):
+	sample_prefix_list = luigi.Parameter()
+	def output(self):
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		return [luigi.LocalTarget("%s/1.alignment/aligned_to_ncbi_map_pos_sorted.bai" % sample) for sample in samples]
 	def requires(self):
 		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
-		return [Index_Contig_Aligned_Bam(sample, self.sample_prefix_list) for sample in samples] + [Sort_NCBI_Aligned_Bam(sample, self.sample_prefix_list) for sample in samples]
+		return [Index_Contig_Aligned_Bam(sample, self.sample_prefix_list) for sample in samples] + [Sort_NCBI_Aligned_Bam(sample, self.sample_prefix_list) for sample in samples] + [Index_NCBI_Aligned_Bam(sample, self.sample_prefix_list) for sample in samples]
+		
+#Index Bam NCBI
+class Index_NCBI_Aligned_Bam(luigi.Task):
+	sample = luigi.Parameter()
+	sample_prefix_list = luigi.Parameter()
+	
+	def run(self):
+		cmd = "samtools index %s/1.alignment/aligned_to_ncbi_map_pos_sorted.bam %s/1.alignment/aligned_to_ncbi_map_pos_sorted.bai" % (self.sample, self.sample)
+		run_cmd(cmd)
+	def output(self):
+		return luigi.LocalTarget("%s/1.alignment/aligned_to_ncbi_map_pos_sorted.bai" % self.sample)
+	def requires(self):
+		return Sort_NCBI_Aligned_Bam_For_Indexing(self.sample, self.sample_prefix_list)
 
-#Index Bam
+#Index Bam Contigs
 class Index_Contig_Aligned_Bam(luigi.Task):
 	sample = luigi.Parameter()
 	sample_prefix_list = luigi.Parameter()
@@ -161,14 +196,30 @@ class Sort_NCBI_Aligned_Bam(luigi.Task):
 		return luigi.LocalTarget("%s/1.alignment/aligned_to_ncbi_sorted.bam" % self.sample)
 	def requires(self):
 		return Align_To_NCBI(self.sample_prefix_list)
+
+class Sort_NCBI_Aligned_Bam_For_Indexing(luigi.Task):
+	sample = luigi.Parameter()
+	sample_prefix_list = luigi.Parameter()
+	
+	def run(self):
+		cmd = "samtools sort %s/1.alignment/aligned_to_ncbi.bam %s/1.alignment/aligned_to_ncbi_map_pos_sorted" % (self.sample, self.sample)
+		run_cmd(cmd)
+	def output(self):
+		return luigi.LocalTarget("%s/1.alignment/aligned_to_ncbi_map_pos_sorted.bam" % self.sample)
+	def requires(self):
+		return Align_To_NCBI(self.sample_prefix_list)
 		
+				
 class Distruct(luigi.Task):
 	sample_prefix_list = luigi.Parameter()
 	
 	def run(self):
-		pass
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		for sample in samples:
+			mkdir("%s/5.distruct" % sample) 
 	def output(self):
-		pass
+		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
+		return [luigi.LocalTarget("%s/5.distruct" % sample) for sample in samples]
 	def requires(self):
 		return Humann(self.sample_prefix_list)
 	
@@ -187,7 +238,7 @@ class Humann(luigi.Task):
 			run_cmd("ln -s $(pwd)/humann/output/*%s* %s/3.humann/" % (sample, sample))
 	def output(self):
 		samples = [sample_prefix.split('/')[-1] for sample_prefix in self.sample_prefix_list]
-		return [(luigi.LocalTarget("%s/3.humann/%s_04b-hit-keg-mpm-cop-nul-nve-nve.txt" % (sample, sample)) for sample in samples)]
+		return [(luigi.LocalTarget("%s/3.humann/%s_00-hit.txt.gz" % (sample, sample)) for sample in samples)]
 	def requires(self):
 		return [Blastx(sample_prefix) for sample_prefix in self.sample_prefix_list]
 
@@ -218,10 +269,8 @@ class Pipe(luigi.Task):
 
 	def requires(self):
 		sample_prefix_list = open(self.sample_list_loc).read().rstrip().split("\n")
-		return [Index_Sort_Bams(sample_prefix_list), Distruct(sample_prefix_list)]
+		return [Diversity(sample_prefix_list), Distruct(sample_prefix_list)]
 
-	def output(self):
-		return None
 	
 		
 if __name__=='__main__':
