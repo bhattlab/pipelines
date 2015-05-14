@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 #a note to self: this is called with the following command:
-#nohup python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc *samples.list --workers=$(wc -l *samples.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01 1> pipeline.log 2> pipeline.err &
+#nohup python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc *samples.list --workers=$(wc -l *samples.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01 1>> pipeline.log 2>> pipeline.err &
 
 #to test:
-#python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc tester.list --workers=$(wc -l tester.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln01
+#python ~/pipelines/luigi_poopline/poopline1.py Pipe --sample-list-loc tester.list --workers=$(wc -l tester.list | tr ' ' '\t' | cut -f1) --scheduler-host scg3-ln02
 
 from subprocess import check_output
 import subprocess
@@ -14,9 +14,11 @@ import random
 
 from luigi_tasks import *
 
-FASTQ_SUFFIX_1 = '.1.fastq.gz'
-FASTQ_SUFFIX_2 = '.2.fastq.gz'
-    
+#CONSTANTS
+FASTQ_SUFFIX_1 = '_1.fq.gz'
+FASTQ_SUFFIX_2 = '_2.fq.gz'
+
+
 #================================================================================================================
 
 
@@ -38,7 +40,11 @@ class Assembly(luigi.Task):
 		sample = self.sample_prefix.split("/")[-1]
 		assembly_dir_val = "%s/0.assembly" % sample
 		mkdir(assembly_dir_val)
-		cmd = "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/spades.py -o {assembly_dir} -1 {sample_pref}{suffix1} -2 {sample_pref}{suffix2} &> {assembly_dir}/spades_output.log".format(assembly_dir = assembly_dir_val, sample_pref = self.sample_prefix, suffix1 = FASTQ_SUFFIX_1, suffix2 = FASTQ_SUFFIX_2)
+		cmd = "/srv/gs1/software/spades/SPAdes-3.1.1-Linux/bin/spades.py -o {assembly_dir} -1 {sample_pref}{suffix1} -2 {sample_pref}{suffix2} &> {assembly_dir}/spades_output.log".format(
+			assembly_dir = assembly_dir_val, 
+			sample_pref = self.sample_prefix, 
+			suffix1 = FASTQ_SUFFIX_1, 
+			suffix2 = FASTQ_SUFFIX_2)
 
 		run_cmd(cmd)
 

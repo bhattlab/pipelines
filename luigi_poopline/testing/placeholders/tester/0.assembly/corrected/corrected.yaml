@@ -1,5 +1,0 @@
-- left reads: [/home/elimoss/pipelines/testing/tester/0.assembly/corrected/tester_1.fq.00.0_0.cor.fastq.gz]
-  orientation: fr
-  right reads: [/home/elimoss/pipelines/testing/tester/0.assembly/corrected/tester_2.fq.00.0_0.cor.fastq.gz]
-  single reads: [/home/elimoss/pipelines/testing/tester/0.assembly/corrected/tester__unpaired.00.0_0.cor.fastq.gz]
-  type: paired-end
