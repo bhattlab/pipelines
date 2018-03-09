@@ -1,0 +1,11 @@
+# general set up for submitting snakemake jobs in batch mode on the cluster
+# -- jobs = max number of jobs to run at once
+
+snakemake --jobs 50 --keep-going --cluster \
+                    "sbatch --account=asbhatt \
+                    	  -J {params.job_name} \
+                        -t {params.max_time} \
+                        --mem={params.max_mem} \
+                        -o {params.job_name}.log \
+                        -e {params.job_name}.error" 
+                          
